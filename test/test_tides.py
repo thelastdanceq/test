@@ -1,3 +1,4 @@
+import datetime
 import pytest
 import sys
 sys.path.insert(0,"../")
@@ -7,6 +8,7 @@ from pylint.lint import Run
 from pylint.reporters import CollectingReporter
 from dataclasses import asdict
 import pandas as pd
+import pytz 
 
 class TestTidalAnalysis():
     
