@@ -182,20 +182,34 @@ def tidal_analysis(data, constituents, start_datetime):
 
 def get_longest_contiguous_data(data):
     """
-    Get the longest contiguous data segment.
+    Identify the longest contiguous segment of data based only on 'Sea Level'.
 
     Args:
-        data (pd.DataFrame): Tidal data.
+        data (pd.DataFrame): Tidal data with 'Time' and 'Sea Level' columns.
 
     Returns:
-        pd.DataFrame: Longest contiguous data segment.
+        pd.DataFrame: The longest contiguous segment of tidal data.
     """
-    data = data.dropna(subset=['Sea Level'])
-    data['diff'] = data.index.to_series().diff().dt.total_seconds() > 3600
-    data['segment'] = data['diff'].cumsum()
-    longest_segment = data.groupby(
-        'segment').size().idxmax()
-    return data[data['segment'] == longest_segment]
+    valid_data_mask = data['Sea Level'].notna()
+
+
+    # Compute the difference from the previous row to detect changes (0 -> 1 or 1 -> 0)
+    # Replace NaN in the first element (result of diff) with 0 to avoid interpretation errors
+    # Compare each element to 0 to determine if there is a change (True if changed, False if not)
+    # Cumulatively sum the True values to assign a unique block identifier to each segment
+    blocks = valid_data_mask.astype(int)\
+        .diff()\
+        .fillna(0)\
+        .ne(0)\
+        .cumsum()\
+
+    filtered_data = data[valid_data_mask]
+
+    longest_block = filtered_data.groupby(
+        blocks[valid_data_mask]).size().idxmax()
+
+    return filtered_data[blocks[valid_data_mask] == longest_block]
+
 
 
 if __name__ == '__main__':
